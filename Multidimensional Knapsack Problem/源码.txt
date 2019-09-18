@@ -1,0 +1,159 @@
+
+<body>
+<div class="box">
+    <h3>请输入Multidimensional Knapsack Problem测试数据</h3>
+    <div class="inputData">
+        <input type="text">
+    </div>
+    <div class="submit">
+        <button>确定</button>
+    </div>
+</div>
+
+<style>
+    *{
+        margin: 0;
+        padding: 0;
+    }
+    .box{
+        width: fit-content;
+        margin: 200px auto;
+        padding: 20px;
+        box-shadow: 2px 2px 2px #777777;
+        border: 1px solid #b0b0b0;
+        -webkit-border-radius: 5px;
+        -moz-border-radius: 5px;
+        border-radius: 5px;
+        position: relative;
+    }
+    .box div{
+        margin-top: 5px;
+    }
+    .inputData input{
+        width: 476px;
+        height: 35px;
+        padding: 0 10px;
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+        border: 1px solid #777777;
+        border-radius: 3px;
+    }
+    .box .submit{
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+    }
+    .box .submit button{
+        display: block;
+        padding: 10px 20px;
+        border-radius: 3px;
+        border: 0;
+        background: #4285F4;
+        color: #ffffff;
+        font-size: 14px;
+    }
+</style>
+
+<script>
+    let button=document.querySelector('.box .submit button')
+    let input=document.querySelector('.inputData input')  /*获取文本框对象*/
+
+    button.onclick=function(){  /*点击确认执行*/
+        /*因为源数据是字符串，所以这里用内置函数先将字符串转换成字符串数组，再将数组里面的字符串元素转成数值*/
+        let testData=input.value  /*保存输入的数据，原始数据为字符串*/
+        /*因为源数据是字符串，所以这里用内置函数先将字符串转换成字符串数组，再将数组里面的字符串元素转成数值*/
+        let arr=testData.split(' ')  /*将字符串转换为字符串数组*/
+        arr=arr.map(value => parseFloat(value))  /*内置方法遍历数组，将字符串元素转成数值*/
+        //数据初始化完成
+
+        let arrCopy=[...arr]  /*不直接操作原来的数据，通过扩展运算符深拷贝数组*/
+
+        //通过内置函数提取各种值
+        let goods={}  /*定义一个空对象*/
+        goods.typeNumber=arrCopy.shift()  /*物品种类数量*/
+        goods.attributeNumber=arrCopy.shift()   /*属性数量*/
+        goods.maxvalue=arrCopy.shift()   /*预设最大价值*/
+        goods.value=arrCopy.splice(0,6)   /*物品价值*/
+        //由于JavaScript不能直接使用arr[10][10]这种方法定义二维数组，所以只能将一维数组里面的每个元素都定义为一个数组，用这种方式定义好一个数组用来装每种物品的属性
+        function attributeGet(){
+            let brr=[]  /*一维数组*/
+            for(let i=0;i<goods.attributeNumber;i++){
+                brr[i]=[]  /*数组元素定义为数组，一维变二维*/
+                for(let j=0;j<goods.typeNumber;j++){
+                    brr[i][j]=arrCopy.shift()  /*抽取元素填入数组*/
+                }
+            }
+            return brr
+        }
+        goods.attribute=attributeGet()  /*每种物品的属性*/
+        goods.attributeLimit=arrCopy.splice(0,arrCopy.length)  /*每种属性的限制, arrCopy抽取完前面的属性最终变为空数组*/
+
+        let x=[]  /*物品的选取状态*/
+        let flag=[]  /*最优的物品选取方案*/
+        let MaxValue=0  /*最大价值*/
+        let tempValue=0  /*当前最大价值*/
+        let attributeSum=[]  /*当前物品约束和*/
+
+
+        /**
+         * @return {boolean}
+         */
+        function Bound(t1){  /*判断当前背包约束加上新物品的约束是否会超出背包约束上限*/
+            let t=t1  /*接收参数*/
+            let boundReturn=true  /*函数默认返回true*/
+            for (let i=0;i<goods.attributeNumber;i++){  /*遍历当前物品所有属性*/
+                /*如果临时物品约束和+新物品约束大于约束上限则，跳出循环并返回false*/
+                if(attributeSum[i]+goods.attribute[i][t]>goods.attributeLimit[i]){
+                    boundReturn=false
+                    break
+                }
+            }
+            return boundReturn
+        }
+
+        function BackTrack(t1){  /*回溯函数*/
+            let t=t1  /*接收参数*/
+            if (t>=goods.typeNumber) {  /*如果搜索到叶子节点则判断*/
+                if (tempValue>=MaxValue){  /*如果当前最大价值大于之前物品的最大价值，则用MaxValue记录最大价值*/
+                    MaxValue=tempValue
+                    for (let i=0;i<goods.typeNumber;i++){
+                        flag[i]=x[i]  /*保存最大价值时的物品选取*/
+                    }
+                }
+                return
+            }
+            if(Bound(t)){  /*搜索右子树*/
+                for (let i=0;i<goods.attributeNumber;i++){
+                    attributeSum[i]+=goods.attribute[i][t]  /*临时约束和加上物品的各种属性*/
+                }
+                tempValue+=goods.value[t]  /*加入新物品的价值*/
+                x[t]=1  /*1表示放入背包*/
+
+                BackTrack(t+1)  /*回溯*/
+                for (let i=0;i<goods.attributeNumber;i++){
+                    attributeSum[i]-=goods.attribute[i][t]  /*临时约束和减去物品的各种属性*/
+                }
+                tempValue-=goods.value[t]  /*恢复原来的价值*/
+                x[t]=0  /*0表示不放入背包*/
+            }
+            BackTrack(t+1)
+        }
+
+        BackTrack(0)  /*从第一件物品开始执行*/
+
+
+        console.log('选取的最大价值是:'+MaxValue)  /*输出最大价值*/
+        console.log('最优选取方案是:')
+        for (let i=0;i<goods.typeNumber;i++){
+            if (flag[i]===1){
+                console.log(i+1)  /*输出最大价值时的物品选取方案*/
+            }
+        }
+
+        input.value=''/*清空文本框*/
+    }
+
+
+</script>
+</body>
